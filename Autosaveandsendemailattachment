@@ -1,0 +1,74 @@
+'Auto send and save email based on attachment file name
+
+Public Sub Autosaveandsendemailattachment(Item As Outlook.MailItem)
+    
+    
+    On Error GoTo ErrorHandler
+    Dim Att As Outlook.Attachment
+    Dim FileName As String
+    Dim dateFormat As String
+    Dim dateSubject As String
+    dateFormat = Format(Now, "hh-mm-ss")
+    dateSubject = Format(Now, "dd-mm-yyyy")
+    
+    For Each Att In Item.Attachments
+        Dim FileExt As String
+        FileExt = Mid(Att.FileName, InStrRev(Att.FileName, "."))
+        Dim BaseName As String
+        BaseName = Left(Att.FileName, InStrRev(Att.FileName, ".") - 1)
+        
+        If InStr(BaseName, "IN-OUT") > 0 Then
+            FileName = "FilePath" & BaseName & "_" & dateFormat & FileExt
+            Att.SaveAsFile FileName
+            FileName = "Filepath" & BaseName & "_" & dateFormat & FileExt
+            If Dir("Filepath", vbDirectory) = "" Then
+                MsgBox "Common drive is not available!"
+            Else
+                Att.SaveAsFile FileName
+            End If
+            FileName = "Filepath" & BaseName & "_" & dateFormat & FileExt
+            If Dir("Filepath", vbDirectory) = "" Then
+                MsgBox "Admin drive is not available!"
+            Else
+                Att.SaveAsFile FileName
+            End If
+            
+            Dim Response As MailItem
+            Set Response = Application.CreateItem(olMailItem)
+            Response.subject = "ACCOMMODATION - " & dateSubject
+            Response.Body = Item.Body
+            Response.To = "emailaddress@email.com"
+            Response.BCC = "emailaddress@email.com"
+            Response.Attachments.Add FileName ' Add this line to attach the file
+            Response.Send
+        End If
+
+        If InStr(BaseName, "V-") > 0 Or InStr(BaseName, "V -") > 0 Then
+            FileName = "Filepath" & BaseName & "_" & dateFormat & FileExt
+            If Dir("Filepath", vbDirectory) = "" Then
+                MsgBox "Common drive is not available!"
+            Else
+                Att.SaveAsFile FileName
+            End If
+            
+            FileName = "Filepath" & BaseName & "_" & dateFormat & FileExt
+            If Dir("Filepath", vbDirectory) = "" Then
+                MsgBox "D drive is not available!"
+            Else
+                Att.SaveAsFile FileName
+            End If
+
+            FileName = "Filepath" & BaseName & "_" & dateFormat & FileExt
+            If Dir("Filepath", vbDirectory) = "" Then
+                MsgBox "Y drive is not available!"
+            Else
+                Att.SaveAsFile FileName
+            End If
+        End If
+    Next Att
+ExitNewItem:
+        Exit Sub
+ErrorHandler:
+        MsgBox Err.Number & " - " & Err.Description
+        Resume ExitNewItem
+End Sub
